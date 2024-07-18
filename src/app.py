@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, url_for
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User
@@ -122,6 +122,21 @@ def sign_in():
         }), 200
 
     return jsonify({"error": "Please try again later!"}), 400
+
+
+
+@app.route('/api/profile', methods=['GET'])
+@jwt_required() #indicamos que es una ruta privada
+def profile():
+
+    id = get_jwt_identity() #accedemos al usuario que esta solicitando la informacion
+    user = User.query.get(id)
+
+    if not user:
+        return jsonify({ "error": "User is invalid"}), 401
+    
+    return jsonify(user.serialize()), 200
+
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
